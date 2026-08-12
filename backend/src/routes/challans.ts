@@ -71,8 +71,8 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
        LEFT JOIN users u ON ch.created_by = u.id
        ${whereClause}
        ORDER BY ch.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       LIMIT ${limit} OFFSET ${offset}`,
+      [...params]
     );
 
     res.json({ data: rows, total, page, limit });

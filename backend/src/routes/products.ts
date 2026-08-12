@@ -52,8 +52,8 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     const total = countRows[0].total;
 
     const [rows] = await pool.execute<any[]>(
-      `SELECT * FROM products ${whereClause} ORDER BY name ASC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+      `SELECT * FROM products ${whereClause} ORDER BY name ASC LIMIT ${limit} OFFSET ${offset}`,
+      [...params]
     );
 
     res.json({ data: rows, total, page, limit });
@@ -176,8 +176,8 @@ router.get('/:id/stock-movements', requireAuth, async (req: Request, res: Respon
        LEFT JOIN users u ON sm.created_by = u.id
        WHERE sm.product_id = ?
        ORDER BY sm.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [req.params.id, limit, offset]
+       LIMIT ${limit} OFFSET ${offset}`,
+      [req.params.id]
     );
 
     res.json({ data: rows, total, page, limit });

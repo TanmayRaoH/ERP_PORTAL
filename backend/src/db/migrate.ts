@@ -16,8 +16,8 @@ async function migrate() {
   const dbName = process.env.DB_NAME || 'mini_erp';
 
   console.log(`Creating database ${dbName} if not exists...`);
-  await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-  await connection.execute(`USE \`${dbName}\``);
+  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+  await connection.query(`USE \`${dbName}\``);
 
   console.log('Running migrations...');
 
