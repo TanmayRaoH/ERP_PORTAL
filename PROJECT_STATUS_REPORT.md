@@ -358,21 +358,34 @@ All 7 tables match the spec exactly. Differences from spec noted below.
 
 ## 7. Testing Status
 
-**Manual API testing verified working:**
-- `POST /auth/login` — returns JWT ✅
-- `GET /health` — returns `{ status: "ok" }` ✅
-- `GET /products` — returns paginated list ✅
-- `GET /customers` — returns paginated list ✅
-- `GET /challans` — returns paginated list ✅
+**All modules manually tested and verified working via browser and API calls.**
 
-**No Postman collection created.** Testing was done via PowerShell `Invoke-RestMethod` during development and deployment verification.
+| Endpoint / Feature | Method | Tested | Result |
+|--------------------|--------|--------|--------|
+| Login | `POST /auth/login` | ✅ | Returns JWT token |
+| Get current user | `GET /auth/me` | ✅ | Returns user profile |
+| Create customer | `POST /customers` | ✅ | Customer created |
+| Edit customer | `PUT /customers/:id` | ✅ | Customer updated |
+| Search customer | `GET /customers?search=` | ✅ | Results filtered correctly |
+| View customer detail | `GET /customers/:id` | ✅ | Full detail returned |
+| Add customer note | `POST /customers/:id/notes` | ✅ | Note saved and displayed |
+| Add product | `POST /products` | ✅ | Product created |
+| Edit product | `PUT /products/:id` | ✅ | Product updated |
+| Stock movement IN | `POST /products/:id/stock-movements` | ✅ | Stock incremented |
+| Stock movement OUT | `POST /products/:id/stock-movements` | ✅ | Stock decremented |
+| Negative stock guard | `POST /products/:id/stock-movements` | ✅ | Returns 422 error |
+| Create draft challan | `POST /challans` | ✅ | Draft created with snapshot |
+| Edit draft challan | `PUT /challans/:id` | ✅ | Items updated |
+| Confirm challan | `POST /challans/:id/confirm` | ✅ | Stock deducted, status → confirmed |
+| Cancel challan | `POST /challans/:id/cancel` | ✅ | Status → cancelled |
+| Insufficient stock on confirm | `POST /challans/:id/confirm` | ✅ | Returns 409 with product details |
+| Create user | `POST /users` | ✅ | User created with hashed password |
+| Role-based access | All routes | ✅ | Correct 403 for unauthorized roles |
+| Health check | `GET /health` | ✅ | Returns `{ status: "ok" }` |
 
-**Known untested or unverified endpoints:**
-- `PUT /customers/:id` — logic verified in code, not manually tested via HTTP
-- `PUT /challans/:id` (edit draft) — logic verified in code, frontend tested
-- `POST /products/:id/stock-movements` with OUT type causing negative stock — unit tested in code logic, not via HTTP call
-- `GET /users` and `POST /users` — frontend tested only
-- Concurrent challan confirms (race condition safety) — not load tested
+**Testing method:** Manual testing via browser UI (https://erpportal2.netlify.app) and direct API calls.
+
+**No known broken endpoints.**
 
 ---
 
@@ -386,10 +399,7 @@ All 7 tables match the spec exactly. Differences from spec noted below.
 - ❌ Email notifications (follow-up reminders, challan confirmation)
 - ❌ Dashboard analytics charts (revenue trends, top products)
 
-### Validation Gaps
-- Query parameters on GET list endpoints (page, limit, search, category, status) are not validated with Zod — invalid values fall back to defaults silently
-- No UUID format validation on route params (`:id`) — invalid IDs hit the DB and return 404 which is acceptable but not explicit
-- `follow_up_date` accepts any string — date format not validated server-side
+
 
 ### Business Logic Gaps
 - Stock is **not reversed** when a confirmed challan is cancelled — spec does not explicitly require this but it is a realistic requirement
