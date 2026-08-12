@@ -56,7 +56,9 @@ export function ProductListPage() {
             {p.current_stock}
           </span>
           {p.current_stock <= p.min_stock_alert && p.min_stock_alert > 0 && (
-            <AlertTriangle className="w-4 h-4 text-red-500" title="Low stock" />
+            <span title="Low stock">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+            </span>
           )}
         </div>
       ),

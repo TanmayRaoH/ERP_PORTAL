@@ -52,7 +52,17 @@ export function CustomerFormPage() {
           status: customer.status,
           follow_up_date: customer.follow_up_date || '',
         }
-      : { customer_type: 'retail', status: 'lead' },
+      : {
+          name: '',
+          mobile: '',
+          email: '',
+          business_name: '',
+          gst_number: '',
+          customer_type: 'retail' as const,
+          address: '',
+          status: 'lead' as const,
+          follow_up_date: '',
+        },
   });
 
   const mutation = useMutation({
