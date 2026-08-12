@@ -1,8 +1,13 @@
 # Mini ERP + CRM Operations Portal — Project Status Report
 
 **Repository:** https://github.com/TanmayRaoH/ERP_PORTAL  
+**Live Application:** https://erpportal2.netlify.app  
+**Backend API:** https://erp-portal-umo0.onrender.com  
 **Report Date:** August 12, 2026  
 **Report Type:** Verified from actual codebase — no assumptions made
+
+> **Demo Login:** Email: `admin@erp.com` | Password: `admin123`  
+> ⚠️ Backend is on Render free tier — first load after idle may take 30–60 seconds (cold start).
 
 ---
 
