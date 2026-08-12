@@ -31,5 +31,8 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Project docs (local only)
+PROJECT_STATUS_REPORT.md
+
 # TypeScript
 *.tsbuildinfo
