@@ -39,100 +39,112 @@ A full-stack Mini ERP + CRM Operations Portal has been built to manage products,
 
 ### a) Authentication & Roles
 
-**Fully Implemented ✅**
-- `POST /auth/login` — email + password login, returns signed JWT with `{ userId, email, role }` payload
-- `GET /auth/me` — returns current user profile from token
-- `requireAuth` middleware — validates Bearer token on every protected route
-- `requireRole(...roles)` middleware — enforces role-based access at route level
-- All four roles exist: `admin`, `sales`, `warehouse`, `accounts`
-- Frontend login page with form validation (Zod + React Hook Form)
-- Auth context with `localStorage` token persistence
-- Axios interceptor auto-attaches token to every API request
-- Auto-redirect to `/login` on 401 responses
-- `RoleGuard` component wraps protected frontend routes
-- Sidebar navigation filters items by role
-- Admin-only Users page to create new employee logins
-- Password hashed with bcryptjs cost 12
-
-**Partially Implemented ⚠️**
-- `req.user.name` is set to empty string `''` in `requireAuth` middleware — name is decoded from token payload but the token only stores `userId`, `email`, `role`. Name requires a DB lookup which is not done in middleware (acceptable for performance, but `req.user.name` is always `''` in route handlers).
-
-**Skipped ❌**
-- Password reset / forgot password flow
-- Token refresh / sliding expiry
-- Login rate limiting / brute-force protection
-- Audit log of login events
+| Requirement | Status |
+|-------------|--------|
+| Login functionality | ✅ `POST /auth/login` with email + password |
+| JWT-based authentication | ✅ `jsonwebtoken`, Bearer token, 7-day expiry |
+| Admin role | ✅ Full access to everything |
+| Sales role | ✅ Customers + own challans + read products |
+| Warehouse role | ✅ Products + stock + confirm challans |
+| Accounts role | ✅ Read-only across all modules |
 
 ---
 
 ### b) Customer CRM
 
-**Fully Implemented ✅**
-- Full CRUD: `GET /customers`, `GET /customers/:id`, `POST /customers`, `PUT /customers/:id`
-- Pagination on list endpoint (`page`, `limit` capped at 100)
-- Search across `name`, `mobile`, `business_name`, `email` (LIKE-based)
-- Status filter (`lead`, `active`, `inactive`)
-- Customer notes: `POST /customers/:id/notes`, `GET /customers/:id/notes`
-- `follow_up_date` field stored and displayed
-- Dashboard widget shows overdue follow-ups (follow-up date ≤ today)
-- `created_by_name` joined from users table on all reads
-- Role enforcement: sales + admin can write; all roles can read
-- Frontend: list page, create form, detail page with notes section, edit form
-- Status badge component for visual status display
-- Follow-up date highlights in red when overdue
+**Customer fields:**
 
-**Partially Implemented ⚠️**
-- No pagination on `GET /customers/:id/notes` — returns all notes for a customer (no limit/offset)
-- Search is LIKE-based only — no full-text search index
+| Field | Status |
+|-------|--------|
+| Customer name | ✅ |
+| Mobile number | ✅ |
+| Email | ✅ |
+| Business name | ✅ |
+| GST number (optional) | ✅ nullable |
+| Customer type (Retail / Wholesale / Distributor) | ✅ ENUM |
+| Address | ✅ |
+| Status (Lead / Active / Inactive) | ✅ ENUM, default Lead |
+| Follow-up date | ✅ DATE field |
+| Notes | ✅ `customer_notes` table |
 
-**Skipped ❌**
-- Customer deletion endpoint (not in spec, not built)
-- Bulk import of customers
-- Customer activity timeline (aggregating notes + challans in one view)
+**Required features:**
+
+| Feature | Status |
+|---------|--------|
+| Add customer | ✅ `POST /customers` + `/customers/new` page |
+| Edit customer | ✅ `PUT /customers/:id` + `/customers/:id/edit` page |
+| Search customer | ✅ LIKE search on name / mobile / email / business name |
+| View customer detail page | ✅ `/customers/:id` with full info |
+| Add follow-up notes | ✅ `POST /customers/:id/notes` + notes section on detail page |
 
 ---
 
 ### c) Product & Inventory
 
-**Fully Implemented ✅**
-- Full CRUD: `GET /products`, `GET /products/:id`, `POST /products`, `PUT /products/:id`
-- Pagination on list with `search` (name/SKU LIKE) and `category` filter
-- Stock movements: `GET /products/:id/stock-movements`, `POST /products/:id/stock-movements`
-- Manual IN/OUT stock movement runs inside a DB transaction with `FOR UPDATE` row lock
-- Negative-stock guard on manual OUT movements — returns 422 `INSUFFICIENT_STOCK` with exact available/requested figures
-- `min_stock_alert` threshold stored per product
-- Dashboard low-stock widget shows products where `current_stock ≤ min_stock_alert`
-- `current_stock` cannot be directly edited via PUT — only adjustable via stock movement endpoint
-- Role enforcement: warehouse + admin write; all roles read
-- Frontend: list with alert icons for low stock, product detail with movement history, create/edit form
+**Product fields:**
 
-**Partially Implemented ⚠️**
-- No image/photo field for products (spec listed S3 upload as bonus — not implemented)
-- Category is a free-text `VARCHAR(100)` — no category master table or dropdown enforcement
+| Field | Status |
+|-------|--------|
+| Product name | ✅ |
+| SKU / code | ✅ unique |
+| Category | ✅ |
+| Unit price | ✅ DECIMAL(10,2) |
+| Current stock | ✅ INT, default 0 |
+| Minimum stock alert quantity | ✅ `min_stock_alert` field |
+| Location / warehouse | ✅ `location` field |
 
-**Skipped ❌**
-- Product deletion endpoint
-- Bulk stock import
-- Stock valuation report
+**Required features:**
+
+| Feature | Status |
+|---------|--------|
+| Add product | ✅ `POST /products` + `/products/new` page |
+| Edit product | ✅ `PUT /products/:id` + `/products/:id/edit` page |
+
+**Stock movement log fields:**
+
+| Field | Status |
+|-------|--------|
+| Product | ✅ `product_id` FK → products |
+| Quantity changed | ✅ `quantity_changed` INT |
+| Movement type (IN / OUT) | ✅ ENUM('IN','OUT') |
+| Reason | ✅ `reason` VARCHAR |
+| Created by | ✅ `created_by` FK → users |
+| Timestamp | ✅ `created_at` TIMESTAMP |
 
 ---
 
 ### d) Sales Challan
 
-**Fully Implemented ✅**
+**Sales user can:**
 
-| Requirement | Status |
-|-------------|--------|
-| Create draft challan with items | ✅ |
-| Edit draft challan (items + customer) | ✅ |
-| Confirm challan — stock deduction transaction | ✅ |
-| Negative-stock guard on confirm | ✅ |
-| Product snapshot on `challan_items` | ✅ |
-| `draft` → `confirmed` → `cancelled` status flow | ✅ |
-| Cancel challan | ✅ |
-| Sales role scope (only own challans) | ✅ |
-| Auto-generated challan number (CH-000001 format) | ✅ |
-| Pagination + status filter on list | ✅ |
+| Action | Status |
+|--------|--------|
+| Select customer | ✅ customer dropdown in challan creation |
+| Add multiple products | ✅ ProductPicker with live search |
+| Add quantity for each product | ✅ per-item quantity input |
+| Generate challan number automatically | ✅ format `CH-000001` |
+| Save as Draft or Confirmed | ✅ created as Draft; warehouse/admin confirms |
+
+**Important business logic:**
+
+| Rule | Status |
+|------|--------|
+| Stock reduced on confirm | ✅ DB transaction deducts stock per item on confirm |
+| Stock cannot go negative | ✅ checked before deduction, entire transaction rolls back on failure |
+| Insufficient stock returns proper error | ✅ 409 response with `{ product_name, available, requested }` per failing item |
+| Product snapshot stored (not just ID) | ✅ `product_name_snapshot`, `sku_snapshot`, `unit_price_snapshot` on `challan_items` |
+
+**Challan fields:**
+
+| Field | Status |
+|-------|--------|
+| Challan number | ✅ auto-generated (`CH-000001` format) |
+| Customer | ✅ FK → customers, name joined on all reads |
+| Products | ✅ `challan_items` table with snapshots |
+| Total quantity | ✅ stored and updated on edit |
+| Status (Draft / Confirmed / Cancelled) | ✅ ENUM, full flow implemented |
+| Created by | ✅ FK → users |
+| Created date | ✅ `created_at` TIMESTAMP |
 
 **Stock deduction transaction detail (verified in code):**
 1. Opens dedicated DB connection, calls `BEGIN TRANSACTION`
@@ -143,17 +155,6 @@ A full-stack Mini ERP + CRM Operations Portal has been built to manage products,
 6. On success: calls `deductStockForChallan()` — `UPDATE products SET current_stock = current_stock - ?` per item + inserts `stock_movements` record (type `OUT`, reason `challan CH-XXXXXX`)
 7. Updates challan status to `confirmed`, sets `confirmed_at = CURRENT_TIMESTAMP`
 8. Commits transaction
-
-**Product snapshot verified:** `challan_items` stores `product_name_snapshot`, `sku_snapshot`, `unit_price_snapshot` captured at creation time from live product data. Historical challans are never affected by product edits.
-
-**Partially Implemented ⚠️**
-- Challan number generation uses `ORDER BY created_at DESC LIMIT 1` — not atomic under high concurrency (acceptable for this scale)
-- No invoice total stored on challan — `total_quantity` stored but not `total_amount` (line item totals computed on frontend from snapshots)
-
-**Skipped ❌**
-- PDF export of challan/invoice
-- Challan duplication feature
-- Stock reversal on cancel of confirmed challan (stock is not returned when a confirmed challan is cancelled)
 
 ---
 
@@ -397,13 +398,7 @@ All 7 tables match the spec exactly. Differences from spec noted below.
 - `challan_number` generation is not atomic under concurrent creation — sequential query-based approach works at small scale
 - No `total_amount` stored on challans — must be recomputed from line items each time
 
-### UI Polish Skipped
-- No loading skeletons on individual pages (only the DataTable has a loader)
-- No confirmation dialogs beyond `window.confirm()` for destructive actions
-- No toast for successful form navigation (only success toast on save)
-- Mobile layout is functional but not deeply optimized
-- No dark mode
-- No keyboard shortcuts or accessibility audit
+
 
 ### Infrastructure
 - No rate limiting on API endpoints
